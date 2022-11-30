@@ -1,0 +1,277 @@
+#To create complete Network stack for New Environment
+AWSTemplateFormatVersion: '2010-09-09'
+
+#############################
+#### Input Parameters #######
+#############################
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: PROD
+  ServiceName:
+    Type: String
+    Default: ARBUTUS
+  VPCCount:
+    Type: String
+    Default: "01"
+  VPCCIDR:
+    Type: String
+    Default: 10.0.22.0/22
+  PrivAZ1CIDR:
+    Type: String
+    Default: 10.0.20.0/24
+  PrivAZ2CIDR:
+    Type: String
+    Default: 10.0.21.0/24
+  PubAZ1CIDR:
+    Type: String
+    Default: 10.0.22.0/24
+  PubAZ2CIDR:
+    Type: String
+    Default: 10.0.23.0/24
+
+###############################
+#### TAGs for Resources #######
+###############################
+  TagScope:
+    Type: String
+    Default: ARBUTUS
+  TagProject:
+    Type: String
+    Default: POC
+  TagBU:
+    Type: String
+    Default: ITUNIX
+  TagCreatedBy:
+    Type: String
+    Default: apradeep
+
+###############################
+#### Resources Creation #######
+###############################
+Resources:
+#### VPC Creation #######
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCIDR
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      InstanceTenancy: default
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${ServiceName}-VPC${VPCCount}"
+      - Key: Scope
+        Value: !Ref TagScope
+      - Key: Project
+        Value: !Ref TagProject
+      - Key: BU
+        Value: !Ref TagBU
+      - Key: Createdby
+        Value: !Ref TagCreatedBy
+#### Subnets Creation #######
+  PrivAZ1Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref PrivAZ1CIDR
+      AvailabilityZone: !Select [ 0, !GetAZs '']
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${ServiceName}-PrivAZ1Sub"
+      - Key: Scope
+        Value: !Ref TagScope
+      - Key: Project
+        Value: !Ref TagProject
+      - Key: BU
+        Value: !Ref TagBU
+      - Key: Createdby
+        Value: !Ref TagCreatedBy
+  PrivAZ2Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref PrivAZ2CIDR
+      AvailabilityZone: !Select [ 1, !GetAZs '']
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${ServiceName}-PrivAZ2Sub"
+      - Key: Scope
+        Value: !Ref TagScope
+      - Key: Project
+        Value: !Ref TagProject
+      - Key: BU
+        Value: !Ref TagBU
+      - Key: Createdby
+        Value: !Ref TagCreatedBy
+  PubAZ1Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref PubAZ1CIDR
+      AvailabilityZone: !Select [ 0, !GetAZs '']
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${ServiceName}-PubAZ1Sub"
+      - Key: Scope
+        Value: !Ref TagScope
+      - Key: Project
+        Value: !Ref TagProject
+      - Key: BU
+        Value: !Ref TagBU
+      - Key: Createdby
+        Value: !Ref TagCreatedBy
+  PubAZ2Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref PubAZ2CIDR
+      AvailabilityZone: !Select [ 1, !GetAZs '']
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${ServiceName}-PubAZ2Sub"
+      - Key: Scope
+        Value: !Ref TagScope
+      - Key: Project
+        Value: !Ref TagProject
+      - Key: BU
+        Value: !Ref TagBU
+      - Key: Createdby
+        Value: !Ref TagCreatedBy
+
+#### Routing Tables Creation #######
+  PrivRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${ServiceName}-PrivRTB"
+      - Key: Scope
+        Value: !Ref TagScope
+      - Key: Project
+        Value: !Ref TagProject
+      - Key: BU
+        Value: !Ref TagBU
+      - Key: Createdby
+        Value: !Ref TagCreatedBy
+  PubRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${ServiceName}-PubRTB"
+      - Key: Scope
+        Value: !Ref TagScope
+      - Key: Project
+        Value: !Ref TagProject
+      - Key: BU
+        Value: !Ref TagBU
+      - Key: Createdby
+        Value: !Ref TagCreatedBy
+
+#### Associate Subnets to Routing Tables #######
+  PrivAZ1SubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivAZ1Subnet
+      RouteTableId:
+        Ref: PrivRoutingTable
+  PrivAZ2SubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivAZ2Subnet
+      RouteTableId:
+        Ref: PrivRoutingTable
+  PubAZ1SubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PubAZ1Subnet
+      RouteTableId:
+        Ref: PubRoutingTable
+  PubAZ2SubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PubAZ2Subnet
+      RouteTableId:
+        Ref: PubRoutingTable
+
+#### Creating Internet Gateway #######
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    # Notice how you can't attach an IGW to a VPC unless both are created:
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+#### Creating NAT Gateway & Assign Elastic IP #######
+  NATGateway:
+     Type: AWS::EC2::NatGateway
+     Properties:
+        AllocationId: !GetAtt NATGatewayEIP.AllocationId
+        SubnetId: !Ref PubAZ1Subnet
+        Tags:
+        - Key: Createdby
+          Value: !Ref TagCreatedBy
+  NATGatewayEIP:
+     Type: AWS::EC2::EIP
+     Properties:
+        Domain: vpc
+
+#### Adding IGW to Public Subnet Route Table  #######
+  PublicRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PubRoutingTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+#### Adding NGW to Private Subnet Route Table  #######
+  PrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivRoutingTable
+      DestinationCidrBlock: 0.0.0.0/0
+      # Route traffic through the NAT Gateway:
+      NatGatewayId: !Ref NATGateway
+
+
+################################
+#### Print the Resources #######
+################################
+Outputs:
+  VPCExport:
+    Description: Exporting VPC
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${EnvironmentName}-${ServiceName}-VPC${VPCCount}"
+
+
+
+[root@nx-server cloudformation]# aws cloudformation create-stack --stack-name arbutus-infra-setup --template-body file://arbutus-infra-setup.yml --profile=arbutus-us-west-1
+{
+    "StackId": "arn:aws:cloudformation:us-west-1:769256516365:stack/arbutus-infra-setup/312d18c0-705a-11ed-b655-06e6247ace19"
+}
+
+[root@nx-server cloudformation]# aws cloudformation update-stack --stack-name arbutus-infra-setup --template-body file://arbutus-infra-setup.yml --profile=arbutus-us-west-1
+{
+    "StackId": "arn:aws:cloudformation:us-west-1:769256516365:stack/arbutus-infra-setup/8ea140d0-705f-11ed-a402-06850765b571"
+}
+
+
+[root@nx-server cloudformation]# aws cloudformation delete-stack --stack-name arbutus-infra-setup --profile=arbutus-us-west-1
